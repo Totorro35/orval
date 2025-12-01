@@ -1493,7 +1493,6 @@ describe('generateZodValidationSchemaDefinition`', () => {
         false,
         false,
       );
-
       expect(parsed.zod).toBe(
         "zod.array(zod.enum(['A', 'B', 'C'])).default([`A`])",
       );
