@@ -52,24 +52,23 @@ export const getMcpHeader: ClientHeaderBuilder = ({ verbOptions, output }) => {
       : upath.relativeSafe(targetInfo.dirname, basePath)
     : './' + targetInfo.filename + '.schemas';
 
-  const importSchemaNames = new Set(
-    Object.values(verbOptions).flatMap((verbOption) => {
-      const imports = [];
-      const pascalOperationName = pascal(verbOption.operationName);
+  const importSchemaNames = [
+    ...new Set(
+      Object.values(verbOptions).flatMap((verbOption) => {
+        const imports = [];
 
-      if (verbOption.queryParams) {
-        imports.push(`${pascalOperationName}Params`);
-      }
+        if (verbOption.queryParams) {
+          imports.push(verbOption.queryParams.schema.name);
+        }
 
-      if (verbOption.body.imports[0]?.name) {
-        imports.push(verbOption.body.imports[0]?.name);
-      }
+        if (verbOption.body.definition) {
+          imports.push(...verbOption.body.imports.map((imp) => imp.name));
+        }
 
-      return imports;
-    }),
-  )
-    .values()
-    .toArray();
+        return imports;
+      }),
+    ),
+  ];
 
   const importSchemasImplementation = `import {\n  ${importSchemaNames.join(
     ',\n  ',
@@ -77,13 +76,13 @@ export const getMcpHeader: ClientHeaderBuilder = ({ verbOptions, output }) => {
 `;
 
   const relativeFetchClientPath = './http-client';
-  const importFetchClientNames = new Set(
-    Object.values(verbOptions).flatMap(
-      (verbOption) => verbOption.operationName,
+  const importFetchClientNames = [
+    ...new Set(
+      Object.values(verbOptions).flatMap(
+        (verbOption) => verbOption.operationName,
+      ),
     ),
-  )
-    .values()
-    .toArray();
+  ];
 
   const importFetchClientImplementation = `import {\n  ${importFetchClientNames.join(
     ',\n  ',
@@ -119,6 +118,8 @@ export const generateMcp: ClientBuilder = (verbOptions) => {
     handlerArgsTypes.push(`  bodyParams: ${verbOptions.body.definition};`);
   }
 
+  handlerArgsTypes.push(`  options?: RequestInit;`);
+
   const handlerArgsName = `${verbOptions.operationName}Args`;
   const handlerArgsImplementation =
     handlerArgsTypes.length > 0
@@ -143,6 +144,8 @@ ${handlerArgsTypes.join('\n')}
   }
   if (verbOptions.body.definition) fetchParams.push(`args.bodyParams`);
   if (verbOptions.queryParams) fetchParams.push(`args.queryParams`);
+
+  fetchParams.push(`args.options`);
 
   const handlerName = `${verbOptions.operationName}Handler`;
   const handlerImplementation = `
@@ -252,13 +255,17 @@ const server = new McpServer({
   version: '1.0.0',
 });
 `;
-  const serverConnectImplementation = `
+
+  const serverConnectImplementation =
+    output.override.mcp.transport === 'stdio'
+      ? `
 const transport = new StdioServerTransport();
 
 server.connect(transport).then(() => {
   console.error('MCP server running on stdio');
 }).catch(console.error);
-`;
+`
+      : 'export default server';
 
   const content = [
     header,
@@ -304,11 +311,11 @@ const generateZodFiles = async (
     ),
   );
 
-  const allMutators = new Map(
-    zods.flatMap((z) => z.mutators ?? []).map((m) => [m.name, m]),
-  )
-    .values()
-    .toArray();
+  const allMutators = [
+    ...new Map(
+      zods.flatMap((z) => z.mutators ?? []).map((m) => [m.name, m]),
+    ).values(),
+  ];
 
   const mutatorsImports = generateMutatorImports({
     mutators: allMutators,
@@ -377,7 +384,7 @@ const generateHttpClientFiles = async (
   const importNames = clients
     .flatMap((client) => client.imports)
     .map((imp) => imp.name);
-  const uniqueImportNames = new Set(importNames).values().toArray();
+  const uniqueImportNames = [...new Set(importNames)];
 
   const importImplementation = `import { ${uniqueImportNames.join(
     ',\n',
@@ -386,7 +393,7 @@ const generateHttpClientFiles = async (
   const fetchHeader = generateFetchHeader({
     title: '',
     isRequestOptions: false,
-    isMutator: false,
+    isMutator: output.override.mutator !== undefined,
     noFunction: false,
     isGlobalMutator: false,
     provideIn: false,
@@ -396,8 +403,26 @@ const generateHttpClientFiles = async (
     clientImplementation,
   });
 
+  let importMutatorImplementation = '';
+  if (output.override.mutator) {
+    const mutatorImport = output.override.mutator;
+    // Relative path between mutator and http client file
+    const importPath = upath.relativeSafe(dirname, mutatorImport.path);
+    //Remove extension from import path
+    const importPathWithoutExt = importPath.replace(
+      new RegExp(`${upath.extname(importPath)}$`),
+      '',
+    );
+    const importDefault = mutatorImport.default
+      ? mutatorImport.name
+      : `{ ${mutatorImport.name} }`;
+
+    importMutatorImplementation = `import ${importDefault} from '${importPathWithoutExt}';\n`;
+  }
+
   const content = [
     header,
+    importMutatorImplementation,
     importImplementation,
     fetchHeader,
     clientImplementation,
