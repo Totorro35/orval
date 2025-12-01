@@ -92,6 +92,7 @@ export type NormalizedOverrideOutput = {
   angular: Required<AngularOptions>;
   swr: SwrOptions;
   zod: NormalizedZodOptions;
+  mcp: NormalizedMcpOptions;
   fetch: NormalizedFetchOptions;
   operationName?: (
     operation: OpenApiOperationObject,
@@ -456,6 +457,7 @@ export type OverrideOutput = {
   query?: QueryOptions;
   swr?: SwrOptions;
   angular?: AngularOptions;
+  mcp?: McpOptions;
   zod?: ZodOptions;
   operationName?: (
     operation: OpenApiOperationObject,
@@ -493,6 +495,10 @@ export type NormalizedHonoOptions = {
   compositeRoute: string;
   validator: boolean | 'hono';
   validatorOutputPath: string;
+};
+
+export type McpOptions = {
+  transport?: 'stdio' | 'http';
 };
 
 export type ZodDateTimeOptions = {
@@ -588,6 +594,10 @@ export type MutationInvalidatesRule = {
 };
 
 export type MutationInvalidatesConfig = MutationInvalidatesRule[];
+
+export type NormalizedMcpOptions = {
+  transport: 'stdio' | 'http';
+};
 
 export type HonoOptions = {
   handlers?: string;
