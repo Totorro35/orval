@@ -11827,6 +11827,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"envalid@npm:8.0.0":
+  version: 8.0.0
+  resolution: "envalid@npm:8.0.0"
+  dependencies:
+    tslib: "npm:2.6.2"
+  checksum: 10c0/8a12cdce071f54d780b2efa68ed77c1c1f397e44e47b2e23d9ec2130d7decc7502ffabff962760371e4eecf696a40a79188fdbd7bfc080d7283d484a8798c6e4
+  languageName: node
+  linkType: hard
+
 "environment@npm:^1.0.0":
   version: 1.1.0
   resolution: "environment@npm:1.1.0"
@@ -17065,12 +17074,40 @@ __metadata:
   languageName: node
   linkType: hard
 
+"mcp-magma@workspace:samples/mcp/magma":
+  version: 0.0.0-use.local
+  resolution: "mcp-magma@workspace:samples/mcp/magma"
+  dependencies:
+    "@modelcontextprotocol/sdk": "npm:1.20.2"
+    "@types/node": "npm:^22.18.12"
+    envalid: "npm:8.0.0"
+    orval: "workspace:*"
+    ts-node: "npm:^10.9.2"
+    typescript: "npm:~5.8.3"
+    zod: "npm:^3.25.76"
+  languageName: unknown
+  linkType: soft
+
 "mcp-petstore@workspace:samples/mcp/petstore":
   version: 0.0.0-use.local
   resolution: "mcp-petstore@workspace:samples/mcp/petstore"
   dependencies:
     "@modelcontextprotocol/sdk": "npm:1.20.2"
     "@types/node": "npm:^22.18.12"
+    orval: "workspace:*"
+    ts-node: "npm:^10.9.2"
+    typescript: "npm:~5.8.3"
+    zod: "npm:^3.25.76"
+  languageName: unknown
+  linkType: soft
+
+"mcp-pro@workspace:samples/mcp/pro":
+  version: 0.0.0-use.local
+  resolution: "mcp-pro@workspace:samples/mcp/pro"
+  dependencies:
+    "@modelcontextprotocol/sdk": "npm:1.20.2"
+    "@types/node": "npm:^22.18.12"
+    envalid: "npm:8.0.0"
     orval: "workspace:*"
     ts-node: "npm:^10.9.2"
     typescript: "npm:~5.8.3"
@@ -23802,6 +23839,13 @@ __metadata:
   bin:
     tsdown: dist/run.mjs
   checksum: 10c0/dcb54e62e0ba7c7d9653e62a8b664e734a1579543b727dc8f56f72d67005c2ee9092bbd6b625e5aa32c9c92d22c951303483ffe21276eae4ea0cc8e8666b5b4e
+  languageName: node
+  linkType: hard
+
+"tslib@npm:2.6.2":
+  version: 2.6.2
+  resolution: "tslib@npm:2.6.2"
+  checksum: 10c0/e03a8a4271152c8b26604ed45535954c0a45296e32445b4b87f8a5abdb2421f40b59b4ca437c4346af0f28179780d604094eb64546bee2019d903d01c6c19bdb
   languageName: node
   linkType: hard
 
