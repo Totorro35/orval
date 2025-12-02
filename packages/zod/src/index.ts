@@ -343,18 +343,21 @@ export const generateZodValidationSchemaDefinition = (
           ? 'null'
           : rawStringified.replaceAll("'", '"');
 
-      // If the schema is an array with enum items, inject inplace to avoid issues with default values
-      const isArrayWithEnumItems =
-        Array.isArray(schema.default) &&
-        type === 'array' &&
-        schema.items &&
-        'enum' in schema.items &&
-        schema.default.length > 0;
+      defaultVarName = defaultValue;
+      defaultValue = undefined;
 
-      if (isArrayWithEnumItems) {
-        defaultVarName = defaultValue;
-        defaultValue = undefined;
-      }
+      // // If the schema is an array with enum items, inject inplace to avoid issues with default values
+      // const isArrayWithEnumItems =
+      //   Array.isArray(schema.default) &&
+      //   type === 'array' &&
+      //   schema.items &&
+      //   'enum' in schema.items &&
+      //   schema.default.length > 0;
+
+      // if (isArrayWithEnumItems) {
+      //   defaultVarName = defaultValue;
+      //   defaultValue = undefined;
+      // }
     }
     if (defaultValue) {
       consts.push(`export const ${defaultVarName} = ${defaultValue};`);
@@ -763,7 +766,7 @@ export const generateZodValidationSchemaDefinition = (
     functions.push(['describe', `'${jsStringEscape(schema.description)}'`]);
   }
 
-  return { functions, consts: unique(consts) };
+  return { functions, consts };
 };
 
 export const parseZodValidationSchemaDefinition = (
@@ -773,12 +776,12 @@ export const parseZodValidationSchemaDefinition = (
   strict: boolean,
   isZodV4: boolean,
   preprocess?: GeneratorMutator,
-): { zod: string; consts: string } => {
+): { zod: string; consts: string[] } => {
   if (input.functions.length === 0) {
-    return { zod: '', consts: '' };
+    return { zod: '', consts: [] };
   }
 
-  let consts = '';
+  const consts: string[] = [];
 
   const parseProperty = (property: [string, any]): string => {
     const [fn, args = ''] = property;
@@ -801,11 +804,11 @@ export const parseZodValidationSchemaDefinition = (
         // Merge all object properties into a single object
         const mergedProperties: Record<string, ZodValidationSchemaDefinition> =
           {};
-        let allConsts = '';
+        const allConsts: string[] = [];
 
         for (const partSchema of allOfArgs) {
           if (partSchema.consts.length > 0) {
-            allConsts += partSchema.consts.join('\n');
+            allConsts.push(...partSchema.consts);
           }
 
           // Find the object function (might be first or second after strict)
@@ -830,7 +833,7 @@ export const parseZodValidationSchemaDefinition = (
         }
 
         if (allConsts.length > 0) {
-          consts += allConsts;
+          consts.push(...allConsts);
         }
 
         // Generate merged object
@@ -839,7 +842,7 @@ export const parseZodValidationSchemaDefinition = (
 ${Object.entries(mergedProperties)
   .map(([key, schema]) => {
     const value = schema.functions.map((prop) => parseProperty(prop)).join('');
-    consts += schema.consts.join('\n');
+    consts.push(...schema.consts);
     return `  "${key}": ${value.startsWith('.') ? 'zod' : ''}${value}`;
   })
   .join(',\n')}
@@ -862,7 +865,7 @@ ${Object.entries(mergedProperties)
         const valueWithZod = `${value.startsWith('.') ? 'zod' : ''}${value}`;
 
         if (partSchema.consts.length > 0) {
-          consts += partSchema.consts.join('\n');
+          consts.push(...partSchema.consts);
         }
 
         if (acc.length === 0) {
@@ -893,8 +896,7 @@ ${Object.entries(mergedProperties)
         }) => {
           const value = functions.map((prop) => parseProperty(prop)).join('');
           const valueWithZod = `${value.startsWith('.') ? 'zod' : ''}${value}`;
-          // consts are missing here
-          consts += argConsts.join('\n');
+          consts.push(...argConsts);
           return valueWithZod;
         },
       );
@@ -908,7 +910,7 @@ ${Object.entries(mergedProperties)
         .map((prop) => parseProperty(prop))
         .join('');
       const valueWithZod = `${value.startsWith('.') ? 'zod' : ''}${value}`;
-      consts += additionalPropertiesArgs.consts.join('\n');
+      consts.push(...additionalPropertiesArgs.consts);
       return `zod.record(zod.string(), ${valueWithZod})`;
     }
 
@@ -926,7 +928,7 @@ ${Object.entries(objectArgs)
       ([fnName]) => fnName === 'circularRef',
     );
 
-    consts += schemaDef.consts.join('\n');
+    consts.push(...schemaDef.consts);
 
     if (hasCircularRef) {
       // Split functions: everything before circularRef, circularRef itself, and everything after
@@ -940,14 +942,14 @@ ${Object.entries(objectArgs)
       const refValue = parseProperty(schemaDef.functions[circularRefIndex]);
 
       // Wrap in lazy and apply modifiers after
-      return `  "${key}": zod.lazy(() => ${refValue})${afterRef}`;
+      return `  get "${key}"(){return ${refValue}}${afterRef}`;
     }
 
     // Normal processing
     const value = (schema as ZodValidationSchemaDefinition).functions
       .map((prop) => parseProperty(prop))
       .join('');
-    consts += (schema as ZodValidationSchemaDefinition).consts.join('\n');
+    consts.push(...(schema as ZodValidationSchemaDefinition).consts);
     return `  "${key}": ${value.startsWith('.') ? 'zod' : ''}${value}`;
   })
   .join(',\n')}
@@ -965,7 +967,7 @@ ${Object.entries(objectArgs)
       );
 
       if (Array.isArray(arrayArgs.consts)) {
-        consts += arrayArgs.consts.join('\n');
+        consts.push(...arrayArgs.consts);
       }
 
       // If circular reference, wrap in lazy
@@ -1023,7 +1025,7 @@ ${Object.entries(objectArgs)
     return `.${fn}(${args})`;
   };
 
-  consts += input.consts.join('\n');
+  consts.push(...input.consts);
 
   const schema = input.functions.map((prop) => parseProperty(prop)).join('');
   const value = preprocess
@@ -1033,10 +1035,6 @@ ${Object.entries(objectArgs)
     : schema;
 
   const zod = `${value.startsWith('.') ? 'zod' : ''}${value}`;
-  // Some export consts includes `,` as prefix, adding replace to remove those
-  if (consts.includes(',export')) {
-    consts = consts.replaceAll(',export', '\nexport');
-  }
   return { zod, consts };
 };
 
@@ -1572,8 +1570,8 @@ const generateZodRoute = async (
   ];
   const allCircularRefs = new Set<string>();
   for (const input of allInputs) {
-    if (input?.zod && typeof input.zod === 'string') {
-      const regex = /zod\.lazy\(\(\) => (\w+)\)/g;
+    if (input.zod && typeof input.zod === 'string') {
+      const regex = /get "\w+"\(\){return (\w+)}/g;
       let match;
       while ((match = regex.exec(input.zod)) !== null) {
         allCircularRefs.add(match[1]);
@@ -1582,13 +1580,17 @@ const generateZodRoute = async (
   }
 
   // Generate schema definitions for circular references
-  const circularSchemaDefs: string[] = [];
+  const circularSchemaDefs: { zod: string; consts: string[] }[] = [];
   for (const schemaName of allCircularRefs) {
     const schemaNamePascal = pascal(schemaName);
+    if (schemaNamePascal in constsUniqueCounter) {
+      continue;
+    }
+    constsUniqueCounter[schemaNamePascal] = 1;
     // Find the schema in the openapi spec
     const schema =
       context.specs[context.specKey].components?.schemas?.[schemaNamePascal];
-    if (schema && typeof schema === 'object' && 'properties' in schema) {
+    if (schema && typeof schema === 'object') {
       // First, dereference the schema to get markers for circular refs
       const refFullPath = `#/components/schemas/${schemaNamePascal}`;
       const schemaContext = { ...context, parents: [refFullPath] };
@@ -1617,10 +1619,17 @@ const generateZodRoute = async (
         isZodV4,
       );
       if (parsed.zod) {
-        circularSchemaDefs.push(
-          `export const ${schemaNamePascal} = ${parsed.zod};`,
-        );
+        circularSchemaDefs.push({
+          zod: `export const ${schemaNamePascal} = ${parsed.zod};`,
+          consts: parsed.consts,
+        });
+      } else {
+        throw new Error(`Circular reference ${schemaNamePascal} not found`);
       }
+    } else {
+      throw new Error(
+        `Circular reference ${schemaNamePascal} not found: found ${JSON.stringify(schema)}`,
+      );
     }
   }
 
@@ -1633,66 +1642,60 @@ const generateZodRoute = async (
     circularSchemaDefs.length === 0
   ) {
     return {
-      implemtation: '',
+      implementation: '',
       mutators: [],
     };
   }
 
-  return {
-    implementation: [
-      ...(inputParams.consts ? [inputParams.consts] : []),
-      ...(inputParams.zod
-        ? [`export const ${operationName}Params = ${inputParams.zod}`]
-        : []),
-      ...(inputQueryParams.consts ? [inputQueryParams.consts] : []),
-      ...(inputQueryParams.zod
-        ? [`export const ${operationName}QueryParams = ${inputQueryParams.zod}`]
-        : []),
-      ...(inputHeaders.consts ? [inputHeaders.consts] : []),
-      ...(inputHeaders.zod
-        ? [`export const ${operationName}Header = ${inputHeaders.zod}`]
-        : []),
-      ...(inputBody.consts ? [inputBody.consts] : []),
-      ...(inputBody.zod
-        ? [
-            parsedBody.isArray
-              ? `export const ${operationName}BodyItem = ${inputBody.zod}
+  const consts = unique([
+    ...inputParams.consts,
+    ...inputQueryParams.consts,
+    ...inputHeaders.consts,
+    ...inputBody.consts,
+    ...inputResponses.flatMap((inputResponse) => inputResponse.consts),
+    ...circularSchemaDefs.flatMap((schemaDef) => schemaDef.consts),
+  ]);
+
+  const zodSchemas = unique([
+    ...(inputParams.zod
+      ? [`export const ${operationName}Params = ${inputParams.zod}`]
+      : []),
+    ...(inputQueryParams.zod
+      ? [`export const ${operationName}QueryParams = ${inputQueryParams.zod}`]
+      : []),
+    ...(inputHeaders.zod
+      ? [`export const ${operationName}Header = ${inputHeaders.zod}`]
+      : []),
+    ...(inputBody.zod
+      ? [
+          parsedBody.isArray
+            ? `export const ${operationName}BodyItem = ${inputBody.zod}
 export const ${operationName}Body = zod.array(${operationName}BodyItem)${
-                  parsedBody.rules?.min ? `.min(${parsedBody.rules.min})` : ''
-                }${
-                  parsedBody.rules?.max ? `.max(${parsedBody.rules.max})` : ''
-                }`
-              : `export const ${operationName}Body = ${inputBody.zod}`,
-          ]
-        : []),
-      ...inputResponses.flatMap((inputResponse, index) => {
-        const operationResponse = camel(
-          `${operationName}-${responses[index][0]}-response`,
-        );
-        return [
-          ...(inputResponse.consts ? [inputResponse.consts] : []),
-          ...(inputResponse.zod
-            ? [
-                parsedResponses[index].isArray
-                  ? `export const ${operationResponse}Item = ${
-                      inputResponse.zod
-                    }
-export const ${operationResponse} = zod.array(${operationResponse}Item)${
-                      parsedResponses[index].rules?.min
-                        ? `.min(${parsedResponses[index].rules.min})`
-                        : ''
-                    }${
-                      parsedResponses[index].rules?.max
-                        ? `.max(${parsedResponses[index].rules.max})`
-                        : ''
-                    }`
-                  : `export const ${operationResponse} = ${inputResponse.zod}`,
-              ]
-            : []),
-        ];
-      }),
-      ...circularSchemaDefs,
-    ].join('\n\n'),
+                parsedBody.rules?.min ? `.min(${parsedBody.rules.min})` : ''
+              }${parsedBody.rules?.max ? `.max(${parsedBody.rules.max})` : ''}`
+            : `export const ${operationName}Body = ${inputBody.zod}`,
+        ]
+      : []),
+    ...inputResponses.flatMap((inputResponse, index) => {
+      const operationResponse = camel(
+        `${operationName}-${responses[index][0]}-response`,
+      );
+      return [
+        ...inputResponse.consts,
+        ...(inputResponse.zod
+          ? [
+              parsedResponses[index].isArray
+                ? `export const ${operationResponse}Item = ${inputResponse.zod}`
+                : `export const ${operationResponse} = ${inputResponse.zod}`,
+            ]
+          : []),
+      ];
+    }),
+    ...circularSchemaDefs.flatMap((schemaDef) => schemaDef.zod),
+  ]);
+
+  return {
+    implementation: [...consts, ...zodSchemas].join('\n\n'),
     mutators: preprocessResponse ? [preprocessResponse] : [],
   };
 };

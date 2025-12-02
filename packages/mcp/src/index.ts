@@ -316,6 +316,16 @@ const generateZodFiles = async (
 
   content += zods.map((zod) => zod.implementation).join('\n');
 
+  // Remove duplication of schemas
+  content = content
+    .split('export const')
+    .reduce<string[]>((acc, schema) => {
+      const cleanSchema = schema.trim();
+      if (acc.includes(cleanSchema)) return acc;
+      return [...acc, cleanSchema];
+    }, [])
+    .join('\nexport const ');
+
   return [
     {
       content,
