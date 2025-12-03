@@ -13,14 +13,12 @@ Some useful links:
  * OpenAPI spec version: 1.0.27-SNAPSHOT
  */
 import { z as zod } from 'zod';
-
 export const findPetsByStatusQueryParams = zod.object({
   status: zod
     .string()
     .optional()
     .describe('Status values that need to be considered for filter'),
 });
-
 export const findPetsByStatusResponseItem = zod.object({
   id: zod.number().optional(),
   name: zod.string(),
@@ -44,12 +42,9 @@ export const findPetsByStatusResponseItem = zod.object({
     .optional()
     .describe('pet status in the store'),
 });
-export const findPetsByStatusResponse = zod.array(findPetsByStatusResponseItem);
-
 export const findPetsByTagsQueryParams = zod.object({
   tags: zod.array(zod.string()).optional().describe('Tags to filter by'),
 });
-
 export const findPetsByTagsResponseItem = zod.object({
   id: zod.number().optional(),
   name: zod.string(),
@@ -73,12 +68,9 @@ export const findPetsByTagsResponseItem = zod.object({
     .optional()
     .describe('pet status in the store'),
 });
-export const findPetsByTagsResponse = zod.array(findPetsByTagsResponseItem);
-
 export const getPetByIdParams = zod.object({
   petId: zod.number().describe('ID of pet to return'),
 });
-
 export const getPetByIdResponse = zod.object({
   id: zod.number().optional(),
   name: zod.string(),
@@ -102,11 +94,9 @@ export const getPetByIdResponse = zod.object({
     .optional()
     .describe('pet status in the store'),
 });
-
 export const updatePetWithFormParams = zod.object({
   petId: zod.number().describe('ID of pet that needs to be updated'),
 });
-
 export const updatePetWithFormQueryParams = zod.object({
   name: zod
     .string()
@@ -117,7 +107,6 @@ export const updatePetWithFormQueryParams = zod.object({
     .optional()
     .describe('Status of pet that needs to be updated'),
 });
-
 export const updatePetWithFormResponse = zod.object({
   id: zod.number().optional(),
   name: zod.string(),
@@ -141,21 +130,16 @@ export const updatePetWithFormResponse = zod.object({
     .optional()
     .describe('pet status in the store'),
 });
-
 export const deletePetParams = zod.object({
   petId: zod.number().describe('Pet id to delete'),
 });
-
 export const deletePetHeader = zod.object({
   api_key: zod.string().optional(),
 });
-
 export const getInventoryResponse = zod.record(zod.string(), zod.number());
-
 export const getOrderByIdParams = zod.object({
   orderId: zod.number().describe('ID of order that needs to be fetched'),
 });
-
 export const getOrderByIdResponse = zod.object({
   id: zod.number().optional(),
   petId: zod.number().optional(),
@@ -167,11 +151,9 @@ export const getOrderByIdResponse = zod.object({
     .describe('Order Status'),
   complete: zod.boolean().optional(),
 });
-
 export const deleteOrderParams = zod.object({
   orderId: zod.number().describe('ID of the order that needs to be deleted'),
 });
-
 export const loginUserQueryParams = zod.object({
   username: zod.string().optional().describe('The user name for login'),
   password: zod
@@ -179,15 +161,12 @@ export const loginUserQueryParams = zod.object({
     .optional()
     .describe('The password for login in clear text'),
 });
-
 export const loginUserResponse = zod.string();
-
 export const getUserByNameParams = zod.object({
   username: zod
     .string()
     .describe('The name that needs to be fetched. Use user1 for testing'),
 });
-
 export const getUserByNameResponse = zod.object({
   id: zod.number().optional(),
   username: zod.string().optional(),
@@ -198,7 +177,6 @@ export const getUserByNameResponse = zod.object({
   phone: zod.string().optional(),
   userStatus: zod.number().optional().describe('User Status'),
 });
-
 export const deleteUserParams = zod.object({
   username: zod.string().describe('The name that needs to be deleted'),
 });

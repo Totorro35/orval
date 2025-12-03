@@ -14,7 +14,7 @@ import {
   upath,
 } from '@orval/core';
 import { generateClient, generateFetchHeader } from '@orval/fetch';
-import { generateZod } from '@orval/zod';
+import { constsUniqueCounter, generateZod } from '@orval/zod';
 import type { InfoObject } from 'openapi3-ts/oas30';
 
 const getHeader = (
@@ -78,6 +78,8 @@ export const getMcpHeader: ClientHeaderBuilder = ({ verbOptions, output }) => {
   const content = [
     importSchemasImplementation,
     importFetchClientImplementation,
+    "import { RequestHandlerExtra } from '@modelcontextprotocol/sdk/shared/protocol.js';",
+    "import { ServerNotification, ServerRequest } from '@modelcontextprotocol/sdk/types.js';",
   ].join('\n');
 
   return content + '\n';
@@ -131,11 +133,19 @@ ${handlerArgsTypes.join('\n')}
   if (verbOptions.body.definition) fetchParams.push(`args.bodyParams`);
   if (verbOptions.queryParams) fetchParams.push(`args.queryParams`);
 
-  fetchParams.push(`args.options`);
+  fetchParams.push(`options`);
 
   const handlerName = `${verbOptions.operationName}Handler`;
   const handlerImplementation = `
-export const ${handlerName} = async (${handlerArgsTypes.length > 0 ? `args: ${handlerArgsName}` : ''}) => {
+export const ${handlerName} = async (
+  args: ${handlerArgsName},
+  extra: RequestHandlerExtra<ServerRequest, ServerNotification>) => {
+  const options = args.options ?? {};
+  const headers: Record<string, string> = {};
+  if (extra.sessionId) {
+    headers['mcp-session-id'] = extra.sessionId;
+  }
+  options.headers = headers;
   const res = await ${verbOptions.operationName}(${fetchParams.join(', ')});
 
   return {
@@ -282,6 +292,9 @@ const generateZodFiles = async (
     output.override.header,
     context.specs[context.specKey].info,
   );
+
+  // Reset zod name counter
+  constsUniqueCounter.reset();
 
   const zods = await Promise.all(
     Object.values(verbOptions).map(async (verbOption) =>

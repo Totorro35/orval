@@ -39,7 +39,6 @@ export const listPetsResponseItem = zod.preprocess(
       .strict(),
   ]),
 );
-export const listPetsResponse = zod.array(listPetsResponseItem);
 
 export const createPetsBodyItem = zod.object({
   name: zod.string(),

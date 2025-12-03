@@ -32,7 +32,6 @@ export const listPetsResponseItem = zod.union([
     type: zod.enum(['cat']),
   }),
 ]);
-export const listPetsResponse = zod.array(listPetsResponseItem);
 
 /**
  * @summary Create a pet

@@ -18,7 +18,6 @@ export const listPetsResponseItem = zod.object({
   name: zod.string(),
   tag: zod.string(),
 });
-export const listPetsResponse = zod.array(listPetsResponseItem);
 
 export const createPetsBodyItem = zod.object({
   name: zod.string(),

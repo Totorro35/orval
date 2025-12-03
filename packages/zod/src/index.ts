@@ -116,7 +116,23 @@ const resolveZodType = (schema: SchemaObject | SchemaObject31) => {
   }
 };
 
-const constsUniqueCounter: Record<string, number> = {};
+class Counter {
+  private counter: Record<string, number> = {};
+
+  public get(name: string): number {
+    return this.counter[name] ?? 0;
+  }
+
+  public set(name: string, value: number): void {
+    this.counter[name] = value;
+  }
+
+  public reset(): void {
+    this.counter = {};
+  }
+}
+
+export const constsUniqueCounter: Counter = new Counter();
 
 // https://github.com/colinhacks/zod#coercion-for-primitives
 const COERCIBLE_TYPES = new Set([
@@ -198,15 +214,15 @@ export const generateZodValidationSchemaDefinition = (
 
   const consts: string[] = [];
   const constsCounter =
-    typeof constsUniqueCounter[name] === 'number'
-      ? constsUniqueCounter[name] + 1
+    typeof constsUniqueCounter.get(name) === 'number'
+      ? constsUniqueCounter.get(name) + 1
       : 0;
 
   const constsCounterValue = constsCounter
     ? pascal(getNumberWord(constsCounter))
     : '';
 
-  constsUniqueCounter[name] = constsCounter;
+  constsUniqueCounter.set(name, constsCounter);
 
   const functions: [string, any][] = [];
   const type = resolveZodType(schema);
@@ -530,7 +546,7 @@ export const generateZodValidationSchemaDefinition = (
         }
 
         if (schema.format === 'date-time') {
-          const options = context.output.override.zod?.dateTimeOptions;
+          const options = context.output.override.zod.dateTimeOptions;
           const formatAPI = getZodDateTimeFormat(isZodV4);
 
           functions.push([formatAPI, JSON.stringify(options)]);
@@ -1583,10 +1599,10 @@ const generateZodRoute = async (
   const circularSchemaDefs: { zod: string; consts: string[] }[] = [];
   for (const schemaName of allCircularRefs) {
     const schemaNamePascal = pascal(schemaName);
-    if (schemaNamePascal in constsUniqueCounter) {
+    if (constsUniqueCounter.get(schemaNamePascal) !== 0) {
       continue;
     }
-    constsUniqueCounter[schemaNamePascal] = 1;
+    constsUniqueCounter.set(schemaNamePascal, 1);
     // Find the schema in the openapi spec
     const schema =
       context.specs[context.specKey].components?.schemas?.[schemaNamePascal];
