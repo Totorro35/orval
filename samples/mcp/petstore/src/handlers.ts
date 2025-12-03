@@ -34,6 +34,11 @@ import {
   deleteUser,
 } from './http-client';
 
+import { RequestHandlerExtra } from '@modelcontextprotocol/sdk/shared/protocol.js';
+import {
+  ServerNotification,
+  ServerRequest,
+} from '@modelcontextprotocol/sdk/types.js';
 /**
  * Multiple status values can be provided with comma separated strings.
  * @summary Finds Pets by status.
@@ -44,8 +49,17 @@ export type findPetsByStatusArgs = {
   options?: RequestInit;
 };
 
-export const findPetsByStatusHandler = async (args: findPetsByStatusArgs) => {
-  const res = await findPetsByStatus(args.queryParams, args.options);
+export const findPetsByStatusHandler = async (
+  args: findPetsByStatusArgs,
+  extra: RequestHandlerExtra<ServerRequest, ServerNotification>,
+) => {
+  const options = args.options ?? {};
+  const headers: Record<string, string> = {};
+  if (extra.sessionId) {
+    headers['mcp-session-id'] = extra.sessionId;
+  }
+  options.headers = headers;
+  const res = await findPetsByStatus(args.queryParams, options);
 
   return {
     content: [
@@ -67,8 +81,17 @@ export type findPetsByTagsArgs = {
   options?: RequestInit;
 };
 
-export const findPetsByTagsHandler = async (args: findPetsByTagsArgs) => {
-  const res = await findPetsByTags(args.queryParams, args.options);
+export const findPetsByTagsHandler = async (
+  args: findPetsByTagsArgs,
+  extra: RequestHandlerExtra<ServerRequest, ServerNotification>,
+) => {
+  const options = args.options ?? {};
+  const headers: Record<string, string> = {};
+  if (extra.sessionId) {
+    headers['mcp-session-id'] = extra.sessionId;
+  }
+  options.headers = headers;
+  const res = await findPetsByTags(args.queryParams, options);
 
   return {
     content: [
@@ -92,8 +115,17 @@ export type getPetByIdArgs = {
   options?: RequestInit;
 };
 
-export const getPetByIdHandler = async (args: getPetByIdArgs) => {
-  const res = await getPetById(args.pathParams.petId, args.options);
+export const getPetByIdHandler = async (
+  args: getPetByIdArgs,
+  extra: RequestHandlerExtra<ServerRequest, ServerNotification>,
+) => {
+  const options = args.options ?? {};
+  const headers: Record<string, string> = {};
+  if (extra.sessionId) {
+    headers['mcp-session-id'] = extra.sessionId;
+  }
+  options.headers = headers;
+  const res = await getPetById(args.pathParams.petId, options);
 
   return {
     content: [
@@ -118,11 +150,20 @@ export type updatePetWithFormArgs = {
   options?: RequestInit;
 };
 
-export const updatePetWithFormHandler = async (args: updatePetWithFormArgs) => {
+export const updatePetWithFormHandler = async (
+  args: updatePetWithFormArgs,
+  extra: RequestHandlerExtra<ServerRequest, ServerNotification>,
+) => {
+  const options = args.options ?? {};
+  const headers: Record<string, string> = {};
+  if (extra.sessionId) {
+    headers['mcp-session-id'] = extra.sessionId;
+  }
+  options.headers = headers;
   const res = await updatePetWithForm(
     args.pathParams.petId,
     args.queryParams,
-    args.options,
+    options,
   );
 
   return {
@@ -147,8 +188,17 @@ export type deletePetArgs = {
   options?: RequestInit;
 };
 
-export const deletePetHandler = async (args: deletePetArgs) => {
-  const res = await deletePet(args.pathParams.petId, args.options);
+export const deletePetHandler = async (
+  args: deletePetArgs,
+  extra: RequestHandlerExtra<ServerRequest, ServerNotification>,
+) => {
+  const options = args.options ?? {};
+  const headers: Record<string, string> = {};
+  if (extra.sessionId) {
+    headers['mcp-session-id'] = extra.sessionId;
+  }
+  options.headers = headers;
+  const res = await deletePet(args.pathParams.petId, options);
 
   return {
     content: [
@@ -169,8 +219,17 @@ export type getInventoryArgs = {
   options?: RequestInit;
 };
 
-export const getInventoryHandler = async (args: getInventoryArgs) => {
-  const res = await getInventory(args.options);
+export const getInventoryHandler = async (
+  args: getInventoryArgs,
+  extra: RequestHandlerExtra<ServerRequest, ServerNotification>,
+) => {
+  const options = args.options ?? {};
+  const headers: Record<string, string> = {};
+  if (extra.sessionId) {
+    headers['mcp-session-id'] = extra.sessionId;
+  }
+  options.headers = headers;
+  const res = await getInventory(options);
 
   return {
     content: [
@@ -194,8 +253,17 @@ export type getOrderByIdArgs = {
   options?: RequestInit;
 };
 
-export const getOrderByIdHandler = async (args: getOrderByIdArgs) => {
-  const res = await getOrderById(args.pathParams.orderId, args.options);
+export const getOrderByIdHandler = async (
+  args: getOrderByIdArgs,
+  extra: RequestHandlerExtra<ServerRequest, ServerNotification>,
+) => {
+  const options = args.options ?? {};
+  const headers: Record<string, string> = {};
+  if (extra.sessionId) {
+    headers['mcp-session-id'] = extra.sessionId;
+  }
+  options.headers = headers;
+  const res = await getOrderById(args.pathParams.orderId, options);
 
   return {
     content: [
@@ -219,8 +287,17 @@ export type deleteOrderArgs = {
   options?: RequestInit;
 };
 
-export const deleteOrderHandler = async (args: deleteOrderArgs) => {
-  const res = await deleteOrder(args.pathParams.orderId, args.options);
+export const deleteOrderHandler = async (
+  args: deleteOrderArgs,
+  extra: RequestHandlerExtra<ServerRequest, ServerNotification>,
+) => {
+  const options = args.options ?? {};
+  const headers: Record<string, string> = {};
+  if (extra.sessionId) {
+    headers['mcp-session-id'] = extra.sessionId;
+  }
+  options.headers = headers;
+  const res = await deleteOrder(args.pathParams.orderId, options);
 
   return {
     content: [
@@ -242,8 +319,17 @@ export type loginUserArgs = {
   options?: RequestInit;
 };
 
-export const loginUserHandler = async (args: loginUserArgs) => {
-  const res = await loginUser(args.queryParams, args.options);
+export const loginUserHandler = async (
+  args: loginUserArgs,
+  extra: RequestHandlerExtra<ServerRequest, ServerNotification>,
+) => {
+  const options = args.options ?? {};
+  const headers: Record<string, string> = {};
+  if (extra.sessionId) {
+    headers['mcp-session-id'] = extra.sessionId;
+  }
+  options.headers = headers;
+  const res = await loginUser(args.queryParams, options);
 
   return {
     content: [
@@ -264,8 +350,17 @@ export type logoutUserArgs = {
   options?: RequestInit;
 };
 
-export const logoutUserHandler = async (args: logoutUserArgs) => {
-  const res = await logoutUser(args.options);
+export const logoutUserHandler = async (
+  args: logoutUserArgs,
+  extra: RequestHandlerExtra<ServerRequest, ServerNotification>,
+) => {
+  const options = args.options ?? {};
+  const headers: Record<string, string> = {};
+  if (extra.sessionId) {
+    headers['mcp-session-id'] = extra.sessionId;
+  }
+  options.headers = headers;
+  const res = await logoutUser(options);
 
   return {
     content: [
@@ -289,8 +384,17 @@ export type getUserByNameArgs = {
   options?: RequestInit;
 };
 
-export const getUserByNameHandler = async (args: getUserByNameArgs) => {
-  const res = await getUserByName(args.pathParams.username, args.options);
+export const getUserByNameHandler = async (
+  args: getUserByNameArgs,
+  extra: RequestHandlerExtra<ServerRequest, ServerNotification>,
+) => {
+  const options = args.options ?? {};
+  const headers: Record<string, string> = {};
+  if (extra.sessionId) {
+    headers['mcp-session-id'] = extra.sessionId;
+  }
+  options.headers = headers;
+  const res = await getUserByName(args.pathParams.username, options);
 
   return {
     content: [
@@ -314,8 +418,17 @@ export type deleteUserArgs = {
   options?: RequestInit;
 };
 
-export const deleteUserHandler = async (args: deleteUserArgs) => {
-  const res = await deleteUser(args.pathParams.username, args.options);
+export const deleteUserHandler = async (
+  args: deleteUserArgs,
+  extra: RequestHandlerExtra<ServerRequest, ServerNotification>,
+) => {
+  const options = args.options ?? {};
+  const headers: Record<string, string> = {};
+  if (extra.sessionId) {
+    headers['mcp-session-id'] = extra.sessionId;
+  }
+  options.headers = headers;
+  const res = await deleteUser(args.pathParams.username, options);
 
   return {
     content: [
