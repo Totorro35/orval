@@ -76,7 +76,7 @@ export const getMcpHeader: ClientHeaderBuilder = ({ verbOptions, output }) => {
   )}\n} from '${relativeSchemaImportPath}';
 `;
 
-  const relativeFetchClientPath = './http-client';
+  const relativeFetchClientPath = `./http-client${importExtension}`;
   const importFetchClientNames = [
     ...new Set(
       Object.values(verbOptions).flatMap(
@@ -193,6 +193,8 @@ export const generateServer = (
   const { extension, dirname } = getFileInfo(output.target);
   const serverPath = upath.join(dirname, `server${extension}`);
   const header = getHeader(output.override.header, info);
+  // Use .js extension for ESM imports when fileExtension is set, otherwise no extension for bundler mode
+  const importExtension = output.fileExtension === '.js' ? '.js' : '';
 
   const toolImplementations = Object.values(verbOptions)
     .map((verbOption) => {
@@ -242,7 +244,7 @@ server.tool(
       return imports;
     })
     .join(',\n');
-  const importToolSchemasImplementation = `import {\n${importToolSchemas}\n} from './tool-schemas.zod';`;
+  const importToolSchemasImplementation = `import {\n${importToolSchemas}\n} from './tool-schemas.zod${importExtension}';`;
 
   const importHandlers = Object.values(verbOptions)
     .filter((verbOption) =>
@@ -250,7 +252,7 @@ server.tool(
     )
     .map((verbOption) => `  ${verbOption.operationName}Handler`)
     .join(`,\n`);
-  const importHandlersImplementation = `import {\n${importHandlers}\n} from './handlers';`;
+  const importHandlersImplementation = `import {\n${importHandlers}\n} from './handlers${importExtension}';`;
 
   const importDependenciesImplementation = `import {
   McpServer
@@ -365,6 +367,8 @@ const generateHttpClientFiles = async (
   context: ContextSpec,
 ) => {
   const { extension, dirname, filename } = getFileInfo(output.target);
+  // Use .js extension for ESM imports when fileExtension is set, otherwise no extension for bundler mode
+  const importExtension = output.fileExtension === '.js' ? '.js' : '';
 
   const header = getHeader(output.override.header, context.spec.info);
 
@@ -432,7 +436,7 @@ const generateHttpClientFiles = async (
     const mutatorImport = output.override.mutator;
     // Relative path between mutator and http client file
     const importPath = upath.relativeSafe(dirname, mutatorImport.path);
-    //Remove extension from import path
+    //Remove extension from import path and add the configured import extension
     const importPathWithoutExt = importPath.replace(
       new RegExp(`${upath.extname(importPath)}$`),
       '',
@@ -441,13 +445,20 @@ const generateHttpClientFiles = async (
       ? mutatorImport.name
       : `{ ${mutatorImport.name} }`;
 
-    importMutatorImplementation = `import ${importDefault} from '${importPathWithoutExt}';\n`;
+    importMutatorImplementation = `import ${importDefault} from '${importPathWithoutExt}${importExtension}';\n`;
+  }
+
+  // Add NonReadonly type if needed
+  let orvalGeneratedTypes = '';
+  if (clientImplementation.includes('NonReadonly<')) {
+    orvalGeneratedTypes = getOrvalGeneratedTypes() + '\n';
   }
 
   const content = [
     header,
     importMutatorImplementation,
     importImplementation,
+    orvalGeneratedTypes,
     fetchHeader,
     clientImplementation,
   ].join('\n');

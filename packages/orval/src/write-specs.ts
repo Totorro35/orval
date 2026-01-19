@@ -314,6 +314,18 @@ export async function writeSpecs(
 
     if (output.indexFiles) {
       const indexFile = upath.join(workspacePath, '/index.ts');
+      const importExtension = output.fileExtension === '.js' ? '.js' : '';
+
+      // Helper to get the correct import path with extension
+      // For directories (schemas), use /index.js; for files, use .js
+      const getImportWithExtension = (imp: string) => {
+        // If schemas path is included in imports, it's a directory
+        const schemasDir = output.schemas ? upath.relativeSafe(workspacePath, getFileInfo(output.schemas).dirname) : null;
+        if (schemasDir && imp === schemasDir) {
+          return `${imp}${importExtension ? '/index.js' : ''}`;
+        }
+        return `${imp}${importExtension}`;
+      };
 
       if (await fs.pathExists(indexFile)) {
         const data = await fs.readFile(indexFile, 'utf8');
@@ -321,14 +333,14 @@ export async function writeSpecs(
         await fs.appendFile(
           indexFile,
           unique(importsNotDeclared)
-            .map((imp) => `export * from '${imp}';\n`)
+            .map((imp) => `export * from '${getImportWithExtension(imp)}';\n`)
             .join(''),
         );
       } else {
         await fs.outputFile(
           indexFile,
           unique(imports)
-            .map((imp) => `export * from '${imp}';`)
+            .map((imp) => `export * from '${getImportWithExtension(imp)}';`)
             .join('\n') + '\n',
         );
       }
